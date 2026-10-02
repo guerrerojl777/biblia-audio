@@ -48,7 +48,7 @@ rotulo = ".flm"
 # final = 1500
 
 [deepgram]
-voz = "aura-2-gloria-es"
+voz = "aura-2-sirio-es"
 # velocidad = 1.0               # 0.9–1.5 recomendado en español, en pasos de 0.05
 credito_usd = 199.72             # PON AQUÍ el saldo que muestra tu consola de Deepgram
 reserva_usd = 10.0              # margen que el pipeline nunca gasta

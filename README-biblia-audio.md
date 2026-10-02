@@ -106,6 +106,12 @@ bja correr gn 1 --proveedor simulado --asr simulado
 ```bash
 bja voces --proveedor deepgram
 bja voces --proveedor deepgram --usar aura-2-luciano-es
+bja voces --proveedor deepgram --usar aura-2-javier-es
+bja voces --proveedor deepgram --usar aura-2-gloria-es
+
+bja correr qo 1
+
+bja correr qo 2-12
 
 bja muestra "Al principio creó Dios el cielo y la tierra." --voz aura-2-alvaro-es
 bja muestra "Al principio creó Dios el cielo y la tierra." --voz aura-2-javier-es
