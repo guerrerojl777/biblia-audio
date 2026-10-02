@@ -1,5 +1,19 @@
 # Cambios
 
+## 0.3.3
+
+El informe responde «¿tengo que detenerme?».
+
+- Dos secciones: «Revisar antes de generar el audio» (algo se leería mal o faltaría:
+  número suelto, nota colada, letras griegas o hebreas, capítulos de menos, trozo descartado
+  con versículos únicos) y «Para tu información» (huecos y repeticiones de numeración,
+  traspuestos, corchetes, cifras). `bja extraer` dice «✓ Nada que revisar antes de generar el
+  audio» cuando corresponde. Con la Biblia entera: 0 para revisar, 75 informativas.
+- Cada hueco de numeración se explica mirando el largo del versículo anterior: «falta el
+  número del 15, pero su texto parece estar al final del 14 (mide 2,2 veces lo normal)»,
+  «esta edición no trae el 29», o, si no está claro, las dos posibilidades.
+- El inspector muestra también las notas informativas.
+
 ## 0.3.2
 
 Para la erre final que algunas voces convierten en «rz» («mar» suena «marzo»).

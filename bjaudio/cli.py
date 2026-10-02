@@ -146,9 +146,17 @@ def extraer(
         for o in omitidos[:10]:
             consola.print(f"  {o}", highlight=False)
     if res.avisos:
-        consola.print(f"[yellow]{len(res.avisos)} avisos para revisar[/]; los primeros:")
+        consola.print(f"[yellow]{len(res.avisos)} aviso(s): revísalos antes de generar el audio[/] (algo se leería mal o faltaría):")
         for a in res.avisos[:12]:
             consola.print(f"  - {a}", highlight=False, markup=False)
+    elif res.capitulos:
+        consola.print("[green]✓ Nada que revisar antes de generar el audio.[/]")
+    if res.notas:
+        consola.print(f"{len(res.notas)} nota(s) informativa(s), no requieren nada:")
+        for n in res.notas[:6]:
+            consola.print(f"  · {n}", highlight=False, markup=False)
+        if len(res.notas) > 6:
+            consola.print("  · … (el resto, en el informe)")
     consola.print(f"Informe completo: {(cfg.dir_trabajo / 'extraccion.txt').relative_to(cfg.raiz)}")
     if not res.capitulos:
         objetivo = libro or "qo"

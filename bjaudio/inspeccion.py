@@ -624,8 +624,12 @@ def _inspeccion_enfocada(epub: Epub, cfg: Config, libro_id: str | None, doc_spec
             out.append("")
         avisos = mejor.avisos + [f"descartado: {d}" for d in mejor.descartados]
         if avisos:
-            out.append(f"## Avisos ({len(avisos)})")
+            out.append(f"## Revisar antes de generar el audio ({len(avisos)})")
             out += [f"  - {x}" for x in avisos[:25]]
+            out.append("")
+        if mejor.notas:
+            out.append(f"## Para tu información, no requieren nada ({len(mejor.notas)})")
+            out += [f"  · {x}" for x in mejor.notas[:25]]
             out.append("")
 
     # esqueletos del documento principal

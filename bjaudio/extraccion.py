@@ -36,6 +36,7 @@ import hashlib
 import html
 import json
 import re
+import statistics
 from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field, replace
@@ -587,7 +588,7 @@ def _unir_en(destino: Capitulo, otro: Capitulo) -> None:
 _MIN_NUMERADOS_SIN_MARCA = 3  # un trozo sin marca de capítulo con menos es ruido de una introducción
 
 
-def _combinar(grupo: list[Capitulo], avisos: list[str]) -> Capitulo:
+def _combinar(grupo: list[Capitulo], avisos: list[str], notas: list[str]) -> Capitulo:
     orden = {id(c): i for i, c in enumerate(grupo)}
     hay_marca = any(c.explicito for c in grupo)
     # Sin marca de capítulo y con pocos versículos numerados: una llamada de nota numérica en
@@ -629,7 +630,7 @@ def _combinar(grupo: list[Capitulo], avisos: list[str]) -> Capitulo:
         for c in aceptados[1:]:
             _unir_en(resultado, c)
         resultado.fragmentos = [_en_orden_numerados(c) for c in aceptados]
-        avisos.append(
+        notas.append(
             f"{ref} — {len(aceptados)} trozos con el mismo número de capítulo y versículos distintos "
             f"({' | '.join(compactar(f) for f in resultado.fragmentos)}): en la BJ hay versículos "
             "traspuestos aquí. Los uní en el orden del libro para que el capítulo quede completo."
@@ -638,10 +639,10 @@ def _combinar(grupo: list[Capitulo], avisos: list[str]) -> Capitulo:
         return f"{c.origen.rsplit('/', 1)[-1]} ({len(set(c.versiculos))} vv.)"
 
     for c in ruido:
-        avisos.append(f"{ref} — descarto un trozo sin marca de capítulo en {donde(c)}: suele ser una llamada "
+        notas.append(f"{ref} — descarto un trozo sin marca de capítulo en {donde(c)}: suele ser una llamada "
                       "de nota numérica en una introducción")
     for c in repetidos:
-        avisos.append(f"{ref} — descarto un duplicado en {donde(c)}: todos sus versículos ya están en el que se conserva")
+        notas.append(f"{ref} — descarto un duplicado en {donde(c)}: todos sus versículos ya están en el que se conserva")
     for c, nuevos in perdidos:
         vv = compactar(sorted(nuevos, key=_orden_natural))
         avisos.append(
@@ -688,7 +689,7 @@ def _separar_prologo(grupo: list[Capitulo]) -> tuple[Capitulo | None, list[Capit
 
 
 def _resolver_duplicados(capitulos: list[Capitulo], avisos: list[str],
-                         notas: list[str] | None = None) -> list[Capitulo]:
+                         notas: list[str]) -> list[Capitulo]:
     grupos: dict[tuple[str, int], list[Capitulo]] = {}
     for cap in capitulos:
         grupos.setdefault((cap.libro, cap.numero), []).append(cap)
@@ -701,13 +702,12 @@ def _resolver_duplicados(capitulos: list[Capitulo], avisos: list[str],
             prologo, resto = _separar_prologo(grupo)
             if prologo is not None:
                 salida.append(prologo)
-                if notas is not None:
-                    notas.append(
-                        f"{prologo.libro} 0 — texto con versículos propios antes del capítulo 1 "
-                        f"({len(set(prologo.versiculos))} vv., en {prologo.origen.rsplit('/', 1)[-1]}): es un prólogo; "
-                        "se guarda como capítulo 0 y se anuncia «Prólogo»"
-                    )
-            salida.append(resto[0] if len(resto) == 1 else _combinar(resto, avisos))
+                notas.append(
+                    f"{prologo.libro} 0 — texto con versículos propios antes del capítulo 1 "
+                    f"({len(set(prologo.versiculos))} vv., en {prologo.origen.rsplit('/', 1)[-1]}): es un prólogo; "
+                    "se guarda como capítulo 0 y se anuncia «Prólogo»"
+                )
+            salida.append(resto[0] if len(resto) == 1 else _combinar(resto, avisos, notas))
     return salida
 
 
@@ -771,6 +771,7 @@ def extraer(epub: Epub, cfg: ConfigEpub, solo_libro: str | None = None,
         if not cap.explicito and libro is not None and libro.capitulos > 1:
             res.avisos.append(f"{cap.libro} 1 — sin marca de capítulo en {cap.origen}: se asumió el capítulo 1")
     res.avisos.extend(diagnosticar(res.capitulos))
+    res.notas.extend(observar(res.capitulos))
     res.notas.extend(notas_de(res.capitulos))
     return res
 
@@ -796,31 +797,14 @@ def _orden_natural(v: str) -> tuple[int, str]:
 
 
 def diagnosticar(capitulos: list[Capitulo]) -> list[str]:
-    """Rarezas que conviene revisar a ojo antes de gastar crédito."""
+    """Lo que hay que revisar ANTES de generar audio: algo se leería mal o faltaría
+    (un número que se leería en voz alta, una nota colada, letras que la voz no sabe leer,
+    capítulos de menos). Lo que no cambia lo que se oye va a observar()."""
     avisos: list[str] = []
     por_libro: dict[str, list[int]] = {}
     for cap in capitulos:
         ref = f"{cap.libro} {cap.numero}"
         por_libro.setdefault(cap.libro, []).append(cap.numero)
-        cubiertos = {n for v in cap.versiculos for n in _cubre(v)}
-        omitidos = {n for o in cap.omitidos for n in _cubre(o.versiculo)}
-        primeros = [n for n in (_numero(v) for v in cap.versiculos) if n is not None]
-        if cubiertos:
-            faltan = sorted(set(range(1, max(cubiertos) + 1)) - cubiertos - omitidos)
-            if faltan:
-                muestra = ", ".join(map(str, faltan[:8])) + ("…" if len(faltan) > 8 else "")
-                avisos.append(f"{ref} — faltan versículos: {muestra}")
-            repetidos = sorted({v for v in cap.versiculos if cap.versiculos.count(v) > 1}, key=_orden_natural)
-            if repetidos == ["1"] and _uno_inicial_corto(cap):
-                repetidos = []  # aclamación inicial numerada aparte (notas_de lo menciona)
-            if repetidos:
-                avisos.append(
-                    f"{ref} — versículos repetidos: {', '.join(repetidos[:8])}{'…' if len(repetidos) > 8 else ''} "
-                    "(si la BJ numera dos veces ese pasaje, está bien: se lee en el orden del libro)"
-                )
-            retrocesos = sum(1 for a, b in zip(primeros, primeros[1:]) if b < a)
-            if retrocesos and len(cap.fragmentos) < 2:
-                avisos.append(f"{ref} — {retrocesos} cambio(s) de orden (la BJ traspone versículos en algunos pasajes; revisa)")
         for u in cap.unidades:
             if len(u.texto) > 1500:
                 avisos.append(f"{ref}:{u.versiculo} — tramo de {len(u.texto)} caracteres: ¿se coló una nota o faltan números de versículo?")
@@ -840,6 +824,86 @@ def diagnosticar(capitulos: list[Capitulo]) -> list[str]:
         if sobran:
             avisos.append(f"{libro_id} — capítulos fuera de rango (el libro tiene {esperados}): {', '.join(map(str, sobran[:10]))}")
     return avisos
+
+
+def _largos_por_verso(cap: Capitulo) -> dict[str, int]:
+    largos: dict[str, int] = {}
+    actual: str | None = None
+    for u in cap.unidades:
+        if u.inicia_versiculo:
+            actual = u.versiculo
+        if actual is not None:
+            largos[actual] = largos.get(actual, 0) + len(u.texto)
+    return largos
+
+
+def _tramos(numeros: list[int]) -> list[tuple[int, int]]:
+    salida: list[tuple[int, int]] = []
+    for n in numeros:
+        if salida and salida[-1][1] == n - 1:
+            salida[-1] = (salida[-1][0], n)
+        else:
+            salida.append((n, n))
+    return salida
+
+
+def _faltantes(cap: Capitulo, faltan: list[int]) -> list[str]:
+    """Explica cada hueco de numeración. Si el EPUB solo perdió el número, el texto quedó
+    pegado al versículo anterior, que mide varias veces lo normal: se lee igual. Si los
+    vecinos tienen el largo de siempre, la edición no trae esos versículos."""
+    ref = f"{cap.libro} {cap.numero}"
+    largos = _largos_por_verso(cap)
+    tipico = statistics.median(largos.values()) if largos else 0
+    salida = []
+    for a, b in _tramos(faltan):
+        cuales = f"el versículo {a}" if a == b else f"los versículos {a}–{b}"
+        previos = [v for v in largos if (_cubre(v) or [0])[-1] == a - 1]
+        largo = largos[previos[-1]] if previos else 0
+        proporcion = largo / tipico if tipico else 0.0
+        k = b - a + 1
+        # Si el texto quedó pegado, el anterior mide como él más los que faltan (≈ k + 1 veces).
+        if previos and largo >= 150 and proporcion >= k + 1.0:
+            numeros = f"falta el número del versículo {a}" if a == b else f"faltan los números de los versículos {a}–{b}"
+            salida.append(
+                f"{ref} — {numeros}, pero su texto parece estar al final del {previos[-1]} "
+                f"(mide {proporcion:.1f} veces lo normal): se lee igual; solo falta en el índice de tiempos"
+            )
+        elif previos and proporcion >= 1.0 + 0.4 * k:
+            salida.append(
+                f"{ref} — falta {cuales}: o su texto está al final del {previos[-1]} (mide {proporcion:.1f} veces lo "
+                "normal) o esta edición no lo trae. En los dos casos se lee lo que hay"
+            )
+        else:
+            salida.append(f"{ref} — esta edición no trae {cuales} (sus vecinos tienen el largo normal): se lee lo que hay")
+    return salida
+
+
+def observar(capitulos: list[Capitulo]) -> list[str]:
+    """Rarezas de numeración que no cambian lo que se oye: huecos, repeticiones y cambios de
+    orden (en la BJ, casi siempre decisiones de la edición)."""
+    notas: list[str] = []
+    for cap in capitulos:
+        ref = f"{cap.libro} {cap.numero}"
+        cubiertos = {n for v in cap.versiculos for n in _cubre(v)}
+        if not cubiertos:
+            continue
+        omitidos = {n for o in cap.omitidos for n in _cubre(o.versiculo)}
+        faltan = sorted(set(range(1, max(cubiertos) + 1)) - cubiertos - omitidos)
+        if faltan:
+            notas.extend(_faltantes(cap, faltan))
+        repetidos = sorted({v for v in cap.versiculos if cap.versiculos.count(v) > 1}, key=_orden_natural)
+        if repetidos == ["1"] and _uno_inicial_corto(cap):
+            repetidos = []  # aclamación inicial numerada aparte (notas_de lo menciona)
+        if repetidos:
+            notas.append(
+                f"{ref} — versículos repetidos: {', '.join(repetidos[:8])}{'…' if len(repetidos) > 8 else ''} "
+                "(la BJ numera dos veces ese pasaje): se lee en el orden del libro"
+            )
+        primeros = [n for n in (_numero(v) for v in cap.versiculos) if n is not None]
+        retrocesos = sum(1 for a, b in zip(primeros, primeros[1:]) if b < a)
+        if retrocesos and len(cap.fragmentos) < 2:
+            notas.append(f"{ref} — {retrocesos} cambio(s) de orden: la BJ traspone versículos aquí; se lee en el orden del libro")
+    return notas
 
 
 # Un número de versículo sin detectar suele quedar al principio de una oración, delante de
@@ -957,10 +1021,12 @@ def informe(res: ResultadoExtraccion, libro: str | None = None) -> str:
         lineas += ["", f"Capítulos descartados ({len(res.descartados)}):"]
         lineas += [f"  - {d}" for d in res.descartados[:40]]
     if res.avisos:
-        lineas += ["", f"Avisos ({len(res.avisos)}):"]
+        lineas += ["", f"Revisar antes de generar el audio ({len(res.avisos)}):"]
         lineas += [f"  - {a}" for a in res.avisos]
+    else:
+        lineas += ["", "Nada que revisar antes de generar el audio."]
     if res.notas:
-        lineas += ["", f"Para tu información ({len(res.notas)}):"]
+        lineas += ["", f"Para tu información, no requieren nada ({len(res.notas)}):"]
         lineas += [f"  - {n}" for n in res.notas]
     reconocidos = [t for t in res.titulos if t.libro and t.modo not in ("ignorado",)]
     if reconocidos:

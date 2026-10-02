@@ -4,4 +4,4 @@ Arquitectura en cascada: Python determinístico orquesta todo; los modelos solo 
 dos subtareas acotadas (sintetizar voz y transcribirla para verificar).
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"

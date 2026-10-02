@@ -85,9 +85,10 @@ def test_traspuestos_se_unen_en_el_orden_del_libro(res):
     assert [s.titulo for s in na[2].secciones] == ["El asedio"]
     segundo = na[2].unidades[2]
     assert segundo.versiculo == "1" and segundo.ruptura >= PARRAFO  # pausa larga entre trozos
-    aviso = next(a for a in res.avisos if a.startswith("na 2 —"))
-    assert "3–4 | 1–2, 5" in aviso and "traspuestos" in aviso
-    assert not any(a.startswith("na 2") and "cambio(s) de orden" in a for a in res.avisos)
+    nota = next(n for n in res.notas if n.startswith("na 2 —"))
+    assert "3–4 | 1–2, 5" in nota and "traspuestos" in nota
+    assert not any(a.startswith("na") for a in res.avisos)  # nada que revisar: no cambia lo que se oye
+    assert not any(n.startswith("na 2") and "cambio(s) de orden" in n for n in res.notas)
 
 
 def test_versiculos_con_letras_unidos_y_entre_corchetes(res):
@@ -126,7 +127,7 @@ def test_numero_suelto_en_una_introduccion_no_crea_capitulo(res):
     # sin marca, que pierde contra el «Ag 1» real.
     ag = _caps(res, "ag")
     assert "Introducción" not in " ".join(u.texto for u in ag[1].unidades)
-    assert any(a.startswith("ag 1 — descarto un trozo sin marca") for a in res.avisos)
+    assert any(n.startswith("ag 1 — descarto un trozo sin marca") for n in res.notas)
 
 
 # ------------------------------------------------------------------ salmos y poesía
@@ -288,7 +289,7 @@ def test_trozo_traspuesto_que_empieza_sin_numero_no_se_pierde(tmp_path):
     assert uno.versiculos == ["1", "2", "3", "4", "5"]
     continuacion = uno.unidades[3]  # el texto sin número sigue el versículo 3, tras una pausa larga
     assert continuacion.versiculo == "3" and not continuacion.inicia_versiculo and continuacion.ruptura >= PARRAFO
-    assert any("(1–3 | 4–5)" in a for a in res.avisos)
+    assert any("(1–3 | 4–5)" in n for n in res.notas)
 
 
 def test_capitulo_1_sin_marca_mas_un_traspuesto_marcado_no_es_prologo(tmp_path):
@@ -343,3 +344,31 @@ def test_numeros_concuerdan_con_el_sustantivo():
     assert numeros_a_palabras("el 3.º día, el 1.º de mayo, el 1.er año") == "el tercer día, el primero de mayo, el primer año"
     assert numeros_a_palabras("1 oveja y 1 hombre") == "una oveja y un hombre"
     assert numeros_a_palabras("Sal 119,105") == "Sal 119,105"  # la coma no es separador de miles en el texto
+
+
+def test_huecos_de_numeracion_explican_si_el_texto_esta(tmp_path):
+    from bjaudio.extraccion import observar
+
+    def cap(versos: dict[str, str]) -> Capitulo:
+        return Capitulo("jn", 5, [Unidad(v, t, 0, True) for v, t in versos.items()])
+
+    normal = "Frase de largo normal para un versículo cualquiera del capítulo."
+    versos = {str(n): normal for n in range(1, 14)}
+    pegado = cap({**versos, "14": normal + " " + normal + " " + normal, "16": normal, "17": normal})
+    nota = observar([pegado])[0]
+    assert "falta el número del versículo 15" in nota and "al final del 14" in nota and "se lee igual" in nota
+    ausente = cap({"1": normal, "2": normal, "3": normal, "4": normal, "6": normal, "7": normal})
+    assert observar([ausente]) == ["jn 5 — esta edición no trae el versículo 5 (sus vecinos tienen el largo normal): se lee lo que hay"]
+    tramo = cap({**{str(n): normal for n in range(1, 19)}, "28": normal, "29": normal})
+    assert observar([tramo])[0].startswith("jn 5 — esta edición no trae los versículos 19–27")
+
+
+def test_extraer_dice_si_no_hay_nada_que_revisar(epub_2009, tmp_path):
+    from typer.testing import CliRunner
+
+    from bjaudio.cli import app
+
+    _proyecto(tmp_path)
+    r = CliRunner().invoke(app, ["--config", str(tmp_path / "config.toml"), "extraer", "--libro", "na"])
+    assert r.exit_code == 0, r.output
+    assert "Nada que revisar antes de generar el audio" in r.output and "nota(s) informativa(s)" in r.output
