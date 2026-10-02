@@ -158,7 +158,6 @@ docker-compose.*.yml
 
 # Secrets & env files
 .env
-.env.*
 
 # Dockerfile backups
 Dockerfile.*
