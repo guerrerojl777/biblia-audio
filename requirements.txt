@@ -1,0 +1,10 @@
+# Dependencias del pipeline (Python 3.10 o superior). ffmpeg se instala aparte (apt).
+httpx>=0.27,<1.0
+beautifulsoup4>=4.12,<5
+soupsieve>=2.5,<3
+lxml>=5.0,<7
+typer>=0.12,<1.0
+rich>=13.7,<16
+num2words>=0.5.13,<0.6
+python-dotenv>=1.0,<2
+tomli>=2.0; python_version < "3.11"

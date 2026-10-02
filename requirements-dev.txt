@@ -1,0 +1,3 @@
+# Para correr las pruebas: python -m pytest
+-r requirements.txt
+pytest>=8,<10

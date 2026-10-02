@@ -1,0 +1,79 @@
+# Configuración de biblia-audio.
+# Solo hace falta lo que quieras cambiar: lo que no esté (o esté comentado) usa el
+# valor por defecto. Una clave mal escrita da error, no se ignora en silencio.
+
+proveedor = "deepgram"   # motor de voz: deepgram | elevenlabs | simulado (tonos, $0, para probar)
+asr = "deepgram"         # verificación: deepgram | whisper | simulado | ninguno
+edicion = ""             # p. ej. "BJ 4.ª ed. (2009)" — se guarda en la etiqueta del MP3
+
+[epub]
+archivo = "libros/biblia.epub"
+bloque_corto_chars = 100
+estrofa = ".top05, .top1"
+rotulo = ".flm"
+# Lo más fácil: bja inspeccionar --libro qo --aplicar  (deduce, prueba y guarda los selectores)
+# BJ 2009 convertida con Sigil (capítulos «Qo 1»): bloque_corto_chars = 100,
+# estrofa = ".top05, .top1" y rotulo = ".flm" (probado con la Biblia entera).
+# titulo_libro = "h1"
+# capitulo = "h2, h3, h4, .capitulo, .cap, .capital, .salmocapital, .chapter, .chapter-num"
+# versiculo = "sup, .v, .vers, .verse, .versiculo, .verse-num"
+# titulo_seccion = "h2, h3, h4, h5, h6"
+# linea_poetica = ""            # p. ej. "p.poesia" si cada línea de un salmo es un <p>
+# estrofa = ""
+# rotulo = ""                   # p. ej. ".flm": rótulos que se leen con pausa larga («La amada»)
+# eliminar = ["a.nota", "a.note", "a.footnote", "a.noteref", "sup.nota", "span.nota",
+#             "div.notas", "div.notes", "div.footnotes", "aside", "span.ref", "span.paralelo"]
+# ignorar_documentos = []       # regex sobre rutas internas, p. ej. ["notas", "intro"]
+# ignorar_titulos = ["^\\s*notas\\b"]   # un título así cierra el libro (notas al final del EPUB)
+# bloque_corto_chars = 0        # 100 si cada línea poética es un <p> propio
+# versiculo_implicito = true    # texto antes del primer número = versículo 1
+
+# [epub.titulos]               # títulos que no se reconocen solos
+# "PRIMER LIBRO DE SAMUEL" = "1s"
+# "PRIMERA PARTE" = "seccion"   # un título dentro de un libro que no debe cortarlo
+
+[plan]
+# objetivo_chars = 600          # tamaño típico de trozo; se corta en fin de oración
+# max_chars = 1800              # tope por petición (Deepgram acepta 2000)
+# poesia_coma = true            # coma al final de líneas poéticas sin puntuación
+# quitar_caracteres = "*†‡§[]"
+# anunciar_capitulo = true      # "Génesis. Capítulo uno."
+
+[pausas]                        # milisegundos
+# anuncio = 900
+# linea = 300
+# versiculo = 250
+# parrafo = 650
+# seccion = 900
+# final = 1500
+
+[deepgram]
+voz = "aura-2-gloria-es"
+# velocidad = 1.0               # 0.9–1.5 recomendado en español, en pasos de 0.05
+credito_usd = 199.72             # PON AQUÍ el saldo que muestra tu consola de Deepgram
+reserva_usd = 10.0              # margen que el pipeline nunca gasta
+# asr_modelo = "nova-3"
+# tts_usd_por_1k = 0.030        # precio Aura-2 pago por uso (octubre de 2026)
+# asr_usd_por_min = 0.0043      # precio Nova-3 pregrabado (octubre de 2026)
+erre_final = "suave"
+
+[elevenlabs]
+voz = ""                        # voice_id; lista: python -m bjaudio voces --proveedor elevenlabs
+# modelo = "eleven_multilingual_v2"
+# creditos_mes = 10000          # plan gratuito
+# semilla = 1234
+
+[whisper]
+# modelo = "small"              # tiny | base | small | medium (más grande = más lento y preciso)
+
+[verificacion]
+# activa = true
+# racha_omision = 3             # palabras seguidas faltantes que marcan un trozo
+# racha_insercion = 4           # palabras seguidas sobrantes que marcan un trozo
+# wer_max = 0.25
+# reintentos = 1                # solo motores estocásticos (ElevenLabs)
+
+[salida]
+# mp3_kbps = 64
+# loudnorm_i = -18.0
+artista = "Biblia de Jerusalén"

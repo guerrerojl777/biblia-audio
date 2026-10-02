@@ -1,0 +1,9 @@
+# Léxico de pronunciación. Columnas separadas por TABULADOR:
+#
+#   palabra <TAB> reescritura <TAB> IPA (opcional, solo Deepgram Aura-2)
+#
+# "-" significa vacío. Coincide por palabra completa y respeta mayúsculas.
+# Añade una entrada SOLO después de escuchar un error. Ejemplos (descomenta y ajusta):
+#
+# Qohélet	Coélet
+# Yahvé	-	ʝaβˈe

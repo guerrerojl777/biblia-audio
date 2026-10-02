@@ -1,0 +1,3 @@
+# Verificación local con Whisper (CPU, $0). Opcional: pesa ~300 MB más el modelo.
+-r requirements.txt
+faster-whisper>=1.1,<2

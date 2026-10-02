@@ -1,0 +1,201 @@
+# ========================
+# Global / OS / Editors
+# ========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+background/
+
+# Editors & IDEs
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.code-workspace
+
+# ========================
+# JavaScript / Node.js
+# ========================
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Directory for instrumented libs
+lib-cov/
+
+# Dependency directories
+node_modules/
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Lockfiles
+package-lock.json
+yarn.lock
+
+# ========================
+# Python
+# ========================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+.env/
+.venv/
+env/
+venv*/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Test outputs
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE / Editor dirs
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# ========================
+# Terraform
+# ========================
+# Local .terraform directories
+**/.terraform/
+
+# State files
+*.tfstate
+*.tfstate.backup
+
+# Crash logs
+crash.log
+
+# CLI override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Auto-generated .tfvars (should be in VCS if hand-managed!)
+*.tfvars
+!override.tfvars
+
+# Secret files
+*.tfvars.json
+
+# ========================
+# Ansible
+# ========================
+# Facts cache
+*.retry
+.fact_cache/
+
+# Vault files
+vault_password.yml
+
+# Logs
+ansible.log
+
+# Roles / Collections output
+roles/
+collections/
+
+# ========================
+# Kubernetes & Helm
+# ========================
+# Helm chart archives
+*.tgz
+
+# Kustomize build output
+.kustomize/
+
+# Kubectl / client caches
+.kube/cache/
+.kube/http-cache/
+
+# Operator SDK
+helm-chart/
+bin/
+
+# ========================
+# Docker
+# ========================
+# Docker build context artifacts
+.docker/
+
+# Override Compose files
+docker-compose.override.yml
+docker-compose.*.yml
+
+# Secrets & env files
+.env
+.env.*
+
+# Dockerfile backups
+Dockerfile.*
+
+# ========================
+# IDE / Tooling (Misc)
+# ========================
+# JetBrains
+.idea/
+
+# Eclipse
+.project
+.metadata/
+
+# Vim swap files
+*.swp
+
+*.pdf
+
+.streamlit/
+
+# Claves
+.env
+
+# Entornos y cachés de Python
+.venv*/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Datos personales y generados (texto del libro, audio, gastos)
+libros/
+*.epub
+trabajo/
+cache/
+salida/
+
+
+
